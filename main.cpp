@@ -5,12 +5,17 @@
  */
 #include <iostream>
 #include "SoHttpRequest.h"
-using namespace std;
-int main(void)
-{
 
+
+using namespace std;
+
+int main()
+{
     SoHttp server(80);
     server.connect();
+
+
+
 
     return(0);
 }

@@ -8,12 +8,8 @@
 #include<stdlib.h>
 #include<sys/socket.h>
 #include<sys/types.h>
-#include<sys/stat.h>
-#include<sys/sendfile.h>
 #include<fcntl.h>
-#include<netinet/in.h>
 #include<arpa/inet.h>
-#include<assert.h>
 #include<unistd.h>
 #include<string.h>
 
@@ -22,54 +18,55 @@ class SoHttp{
         void connect();
         SoHttp(int port);
     private:
-        int port;
-        int sock;
-        int connfd;
-        int ret;
+        int fd;
+        int res;
+        int clientfd;
         struct sockaddr_in sever_address;
-
-
 };
 
-SoHttp::SoHttp( int port) {
-    this->port = port;
-    bzero(&sever_address,sizeof(sever_address));
-    sever_address.sin_family = PF_INET;
-    sever_address.sin_addr.s_addr = htons(INADDR_ANY);
-    sever_address.sin_port = htons(this->port);
-    sock = socket(AF_INET,SOCK_STREAM,0);
-    assert(sock>=0);
-    ret = bind(sock, (struct sockaddr*)&sever_address,sizeof(sever_address));
-    assert(ret != -1);
-    ret = listen(sock,1);
-    assert(ret != -1);
+SoHttp::SoHttp(int port) {
+
+    //1.创建TCP
+    fd = socket(AF_INET,SOCK_STREAM,0);
+
+    if (-1 == fd){
+        printf("SoHttp：Socket创建失败 \n");
+        perror("Socket创建失败");
+        return;
+    }
+
+    //2.设置具体参数
+    sever_address.sin_family =AF_INET;//协议族
+    sever_address.sin_port = htons(port);//端口
+    sever_address.sin_addr.s_addr = INADDR_ANY;//第一种
+    //inet_addr("127.0.0.1") 第二种ip
+    //3.绑定套接字
+    res = bind(fd,(struct sockaddr*)&sever_address,sizeof(sever_address));
+
+    if (-1 == res){
+        printf("SoHttp：Socket绑定失败 \n");
+        perror("Socket绑定失败");
+        close(fd);
+        return;
+    }
+    res = listen(fd,1000);
+
+    if (-1 == res){
+        printf("SoHttp：Socket监听失败 \n");
+        perror("Socket监听失败");
+        close(fd);
+        return;
+    }
+
+    printf("SoHttp：服务器启动成功 端口在： %i \n",port);
+
 }
 
 void SoHttp::connect() {
-    while (1) {
-        struct sockaddr_in client;
-        socklen_t client_addrlength = sizeof(client);
-        connfd = accept(sock, (struct sockaddr*)&client, &client_addrlength);
-        if(connfd<0)
-        {
-            printf("errno\n");
-        }
-        else{
-            char request[1024];
-            recv(connfd,request,1024,0);
-            request[strlen(request)+1]='\0';
-            printf("%s\n",request);
-            printf("successeful!\n");
-            char buf[520]="HTTP/1.1 200 ok\r\nContent-Type: text/html\r\n\r\n";//HTTP响应
-            int s = send(connfd,buf,strlen(buf),0);//发送响应
-            printf("send=%d\n",s);
-            int fd = open("index.html",O_RDONLY);//消息体
-            struct stat stat_buf;
-            fstat(fd,&stat_buf);
-            sendfile(connfd,fd,NULL,stat_buf.st_size);//零拷贝发送消息体
-            printf("send=%d\n",fd);
-            close(fd);
-            close(connfd);
-        }
+    while (1){
+        //等待连接
+        clientfd = accept(fd,NULL,NULL);
+        //处理连接
+        close(clientfd);
     }
 }
