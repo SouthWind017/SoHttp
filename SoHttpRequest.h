@@ -27,6 +27,8 @@ class SoHttp{
         int connfd;
         int ret;
         struct sockaddr_in sever_address;
+
+
 };
 
 SoHttp::SoHttp( int port) {
@@ -42,6 +44,7 @@ SoHttp::SoHttp( int port) {
     ret = listen(sock,1);
     assert(ret != -1);
 }
+
 void SoHttp::connect() {
     while (1) {
         struct sockaddr_in client;
@@ -57,11 +60,14 @@ void SoHttp::connect() {
             request[strlen(request)+1]='\0';
             printf("%s\n",request);
             printf("successeful!\n");
-            char buf[520]="HTTP/1.1 200 ok\r\nconnection: close\r\n\r\n";//HTTP响应
+            char buf[520]="HTTP/1.1 200 ok\r\nContent-Type: text/html\r\n\r\n";//HTTP响应
             int s = send(connfd,buf,strlen(buf),0);//发送响应
-            //printf("send=%d\n",s);
+            printf("send=%d\n",s);
             int fd = open("index.html",O_RDONLY);//消息体
-            sendfile(connfd,fd,NULL,2500);//零拷贝发送消息体
+            struct stat stat_buf;
+            fstat(fd,&stat_buf);
+            sendfile(connfd,fd,NULL,stat_buf.st_size);//零拷贝发送消息体
+            printf("send=%d\n",fd);
             close(fd);
             close(connfd);
         }
