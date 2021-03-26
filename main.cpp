@@ -11,8 +11,9 @@ using namespace std;
 
 int main()
 {
+
     SoHttp server(80);
-    server.connect();
+    server.start();
 
 
 
