@@ -42,6 +42,7 @@ void SoHttp::start() {
     assert(res != -1);
     res = listen(sock,1);
     assert(res != -1);
+    printf("SoHttp：成功接成功启动在端口：%i\n",port);
     while (1){
 
         struct sockaddr_in client;
@@ -72,12 +73,12 @@ void SoHttp::handClient(int fd) {
     }
 
     char response[1024*1024]={0};
-    sprintf(response,"HTTP/1.1 200 ok\r\nContent-Type: %s\r\n\r\n",mime);
+    sprintf(response,"HTTP/1.1 200 OK\r\nContent-Type: %s\r\n\r\n",mime);
     int responselen = strlen(response);
     int fileFd = open(fileName,O_RDONLY);
-    int fileLen = read(fileFd,responselen+response, sizeof(response)-responselen);
+    int fileLen = read(fileFd,response+responselen, sizeof(response)-responselen);
     write(fd,response,responselen+fileLen);
     close(fd);
     close(fileFd);
-    sleep(2);
+    sleep(1);
 }
