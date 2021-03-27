@@ -23,6 +23,7 @@ class SoHttp{
         int res;
         int clientfd;
         struct sockaddr_in sever_address;
+        void handClient(int fd);//处理请求
 };
 
 SoHttp::SoHttp(int port) {
@@ -61,6 +62,16 @@ void SoHttp::start() {
 
         clientfd = accept(fd,NULL,NULL);
         //处理连接
+        handClient(fd);
+        //释放资源
         close(clientfd);
     }
+}
+void SoHttp::handClient(int fd) {
+    char buff[1024*1024] = {0}; //缓存
+    int res = read(fd,buff,sizeof buff);
+    if(res > 0){
+        printf("成功接收到数据：%s \n",buff);
+    }
+
 }
